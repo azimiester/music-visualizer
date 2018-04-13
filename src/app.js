@@ -1,46 +1,27 @@
 const scss = require("../static/style.scss");
-import Sound from './Sound';
+import Null from "./tracking";
+window.onload = function() {
+  var video = document.getElementById("video");
+  var canvas = document.getElementById("canvas");
+  var context = canvas.getContext("2d");
+  var tracker = new tracking.ObjectTracker("face");
+  tracker.setInitialScale(4);
+  tracker.setStepSize(2);
+  tracker.setEdgesDensity(0.1);
+  tracking.track("#video", tracker, { camera: true });
+  var base_image = new Image();
+  base_image.src = "../static/shit.png";
+  base_image.onload = function() {
+    tracker.on("track", function(event) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      event.data.forEach(function(rect) {
+        context.drawImage(base_image, rect.x, rect.y, rect.width, rect.height);
+      });
+    });
+  };
 
-let context = new (window.AudioContext || window.webkitAudioContext)();
-
-
-document.addEventListener('mousemove', cursor);
-var stick = document.querySelector('.stick');
-var glow1 = document.querySelector('.stick .glow-1');
-var glow2 = document.querySelector('.stick .glow-2');
-var notes = document.querySelectorAll('.note');
-
-notes.forEach((note) => {
-    note.addEventListener('mouseenter', () => {
-        playSound(note);
-        showGlow();
-        setTimeout(hideGlow, 300);
-    })
-    note.addEventListener('mouseleave', hideGlow);
-})
-
-function playSound(note) {
-    let sound = new Sound(context);
-    let value = note.dataset.frequency;
-    sound.play(value);
-    sound.stop();
-}
-
-function showGlow() {
-    glow1.style.animationPlayState = "running";
-    glow2.style.animationPlayState = "running";
-    glow1.classList.remove('hidden');
-    glow2.classList.remove('hidden');
-}
-
-function hideGlow() {
-    glow1.style.animationPlayState = "paused";
-    glow2.style.animationPlayState = "paused";
-    glow1.classList.add('hidden');
-    glow2.classList.add('hidden');
-}
-
-function cursor(e) {
-    stick.style.top = e.clientY - 12 + "px";
-    stick.style.left = e.clientX + 12 + "px";
-}
+  var gui = new dat.GUI();
+  gui.add(tracker, "edgesDensity", 0.1, 0.5).step(0.01);
+  gui.add(tracker, "initialScale", 1.0, 10.0).step(0.1);
+  gui.add(tracker, "stepSize", 1, 5).step(0.1);
+};
